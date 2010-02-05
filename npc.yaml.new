@@ -1,0 +1,33 @@
+# NPC Config
+
+hub:
+  server: 127.0.0.1
+  port: 5010
+
+sim:
+  server: 127.0.0.1
+  port: 5000
+
+smith:
+    username: AgentSmith
+    password: password
+    
+johnson:
+    username: AgentJohnson
+    password: password
+    
+williams:
+    username: AgentWilliams
+    password: password
+            
+leadagent:
+    script: |
+       @server.puts 'say I must get out of here I must get to Zion'
+
+specialagent:
+    script: |
+       @server.puts 'say I am Special Agent'
+
+assistantagent:
+    script: |
+       @server.puts 'say I am Assistant Agent'

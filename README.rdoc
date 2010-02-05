@@ -1,0 +1,36 @@
+== Daimoku Multi-Programmer Online
+
+Daimoku Multi-Programmer Online is an environment written in Ruby and ActiveRecord and implemented using Why's Freaky-Freaky Sandbox. Daimoku allows multiple Ruby programmers to chat, share code and objects in real-time in an EW-Two-style environment.
+
+=== An RPG for Ruby Programmers
+Daimoku is an RPG for programmers, specifically Ruby programmers. The game interface uses IRB, to speak to another player, use a string literal, for example "hello world", which the game server will display to all Players within the same room. The game world uses a shared IRB, therefore all variables are immediately shared.
+
+=== Chat
+Players in the same room can see each other's Ruby code, as they are typing the code in, as well as being able to see the IRB evaluation. For privacy, simply move to another empty room.
+
+=== Sharing Objects
+Any objects that are instantiated are automatically shared. Obviously, Players in the same room would be able to see the variable name that holds a reference to the object. This is a great way to teach/hack Ruby.
+
+=== In World API
+The game world has an API, which is immediately invokable by the Players. The API allows a Player to run a socket server and socket client within the game world. 
+
+=== Commands:
+north, south, east, west, up, down, exits, take, drop, inventory, io
+
+=== Scripts
+Almost everything is scriptable: People, Places (rooms), and Things. Scripts may be imported into the game, from the Internet.
+
+=== IRB
+Of course, you get an IRB (interactive Ruby) prompt, so that you can hack Ruby while you play
+
+=== System Agent AIs
+To keep order and help prevent the Players from becoming 'Neo' and hacking the game world, from inside. Daimoku will have NPC System Agents that will patrol the system looking for anomalies.
+
+=== Player Attributes (Programmer vs. Programmer)
+Players will have hit points, armor class, and will be able to create daemons which will damage or heal other programmers; this leads to an interesting PvP game. 
+
+=== Contact
+Any questions or comments send email to:  rdegraci@gmail.com
+
+August 1st, 2009
+

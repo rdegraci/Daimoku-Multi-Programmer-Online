@@ -1,0 +1,10 @@
+# Database connection parameters
+adapter: mysql
+host: localhost
+database: Daimoku-Rails_development
+username: username
+password: password
+pool: 20
+wait_timeout: 10
+
+
