@@ -1,5 +1,7 @@
 #! /usr/local/bin/ruby
 
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+
 require 'sandbox'
 
 require 'rubygems'
@@ -8,6 +10,7 @@ require 'active_record'
 require 'matrixserver.rb'
 require 'matrixirb.rb'
 require 'yaml'
+require 'daemons'
 
 puts   "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 puts
@@ -35,5 +38,7 @@ puts
 puts
 
 
-config = YAML.load_file 'server.yaml'
+config = YAML.load_file '/usr/local/daimoku-server/server.yaml'
 SimulationServer.new(config['server'], config['port']).run.join
+
+

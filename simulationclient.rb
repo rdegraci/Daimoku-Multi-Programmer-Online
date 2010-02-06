@@ -9,7 +9,7 @@ class SimulationClient
 
   attr_reader :name, :password, :socket, :session_id, :character_proxy, :player_io, :player_lego_io
 
-  config = YAML.load_file 'database.yaml'
+  config = YAML.load_file '/usr/local/daimoku-server/database.yaml'
   @@connection = ActiveRecord::Base.establish_connection(config)
   
   @@peers = PeerConnections.new

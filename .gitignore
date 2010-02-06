@@ -4,3 +4,5 @@ database.yaml
 drb.yaml
 npc.yaml
 server.yaml
+server.rb.pid
+

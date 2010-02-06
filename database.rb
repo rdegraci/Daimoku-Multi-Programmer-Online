@@ -2,27 +2,27 @@ require 'rubygems'
 require 'active_record'
 require 'active_support'
 
-require '../daimoku-rails/app/models/simcharacter.rb'
-require '../daimoku-rails/app/models/simperson.rb'
-require '../daimoku-rails/app/models/simplace.rb'
-require '../daimoku-rails/app/models/simthing.rb'
-require '../daimoku-rails/app/models/simdoor.rb'
-require '../daimoku-rails/app/models/simkey.rb'
-require '../daimoku-rails/app/models/simnorth.rb'
-require '../daimoku-rails/app/models/simsouth.rb'
-require '../daimoku-rails/app/models/simeast.rb'
-require '../daimoku-rails/app/models/simwest.rb'
-require '../daimoku-rails/app/models/simup.rb'
-require '../daimoku-rails/app/models/simdown.rb'
-require '../daimoku-rails/app/models/simmap.rb'
-require '../daimoku-rails/app/models/simplayer.rb'
+require '/usr/local/daimoku-rails/app/models/simcharacter.rb'
+require '/usr/local/daimoku-rails/app/models/simperson.rb'
+require '/usr/local/daimoku-rails/app/models/simplace.rb'
+require '/usr/local/daimoku-rails/app/models/simthing.rb'
+require '/usr/local/daimoku-rails/app/models/simdoor.rb'
+require '/usr/local/daimoku-rails/app/models/simkey.rb'
+require '/usr/local/daimoku-rails/app/models/simnorth.rb'
+require '/usr/local/daimoku-rails/app/models/simsouth.rb'
+require '/usr/local/daimoku-rails/app/models/simeast.rb'
+require '/usr/local/daimoku-rails/app/models/simwest.rb'
+require '/usr/local/daimoku-rails/app/models/simup.rb'
+require '/usr/local/daimoku-rails/app/models/simdown.rb'
+require '/usr/local/daimoku-rails/app/models/simmap.rb'
+require '/usr/local/daimoku-rails/app/models/simplayer.rb'
 
 require 'yaml'
 
 # Used to process the scripts for all People, Places, and Things
 module AutomationProcessor
 
-  yaml = YAML.load_file 'database.yaml'
+  yaml = YAML.load_file '/usr/local/daimoku-server/database.yaml'
   @@connection = ActiveRecord::Base.establish_connection(yaml)
         
   # Initialize with the Simulation
