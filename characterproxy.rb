@@ -1,14 +1,14 @@
 
 require 'simulationclient.rb'
 
-# CharacterProxy acts as the proxy between the Daimoku Game World and the SimulationClient. 
+# CharacterProxy acts as the proxy between the Daimoku Game World and the SimulationClient.
 # Commands are evaluated within the Sandbox and then the result marshalled back to the CharacterProxy.
 class CharacterProxy
 
   attr_reader :name, :matrix_character, :sandbox, :socket, :character_matrix_io, :session_id
 
   attr_writer :io_object_name
-  
+
   # character_matrix_io is used by the Sandbox to send output back to the Player's socket
   def initialize(name, matrix_character, sandbox, socket, character_matrix_io, session_id)
     @matrix_character = matrix_character
@@ -21,10 +21,10 @@ class CharacterProxy
     #There must be a better way
     @peers = SimulationClient::peer_connections
     raise if !@peers
- 
+
     @name = name
   end
-  
+
   # Provide a random string, used for creating session ids and guids
   def randnum
     abc = %{123456789ABCDEFGHIJKLMNPQRSTUVWXYZ123456789}
@@ -71,7 +71,7 @@ class CharacterProxy
   def logout
     puts "matrix_character is #{@matrix_character}"
     puts "#{@matrix_character.class}"
-        
+
     @sandbox.eval %{
       name = '#{@name}'
       #{@matrix_character} = Simcharacter.find(:first, :conditions => ['name = ?', name], :include => [:simplayer])
@@ -147,7 +147,7 @@ class CharacterProxy
       #{@matrix_character}.go(:simwest, #{@characterio})
     }
   end
-  
+
   # Go to the room above the current Room. Called by the SimulationClient
   def up
     puts "#{@matrix_character} going up."
@@ -176,12 +176,12 @@ class CharacterProxy
       #{@matrix_character}.announce_arrival #{@characterio}
     }
   end
-  
+
   # Announce the name of the IO Object. Called by the SimulationClient
   def io
     @socket.puts "Your IO object is #{@io_object_name}"
   end
- 
+
   # Say a message to the current room
   # Send the message to each Player's socket
   def say_room text
@@ -197,8 +197,8 @@ class CharacterProxy
 
     @socket.puts "You say, #{text}"
   end
-  
-  
+
+
   # Emote a message to the current room
   # Send the message to each Player's socket
   def emote_room text
@@ -212,7 +212,7 @@ class CharacterProxy
       @peers.say_private(s, cooked_text) if s != @session_id
     end
   end
-  
+
   # Take an item that is in the current room
   # Send the message to each Player's socket
   def take item
@@ -231,10 +231,11 @@ class CharacterProxy
         true
       else
         false
-      end }
-      emote_room "#{@name} takes the #{item}." if taken == true
+      end
+    }
+    emote_room "#{@name} takes the #{item}." if taken == true
   end
-  
+
   # Drop an items into the current room
   # Send the message to each Player's socket
   def drop item
@@ -244,10 +245,10 @@ class CharacterProxy
       item_name = '#{item}'
       #{@matrix_character} = Simcharacter.find(:first, :conditions => ['name = ?', name], :include => [{:simperson => :simthings}])
       #{@matrix_character}.drop(item_name, #{@characterio})
-      }
+    }
     emote_room "#{@name} drops the #{item}." if dropped == true
   end
-  
+
   # Drop an items into the current room
   # Send the message to each Player's socket
   def inventory
@@ -258,9 +259,9 @@ class CharacterProxy
       #{@matrix_character}.inventory(name, #{@characterio})
     }
   end
-  
 
-  # Say the code and it's results to the current room. 
+
+  # Say the code and it's results to the current room.
   # Send the code to each Player's socket.
   def say_code code
     cooked_text = "\n#{@name}: #{code}"

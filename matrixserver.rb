@@ -14,7 +14,7 @@ require 'simulationclient.rb'
 
 # A socket server that accepts socket connections and assigns them to a SimulationClient on a
 # per Thread basis. Uses a simple timer system to kill any SimulationClient that may be taking
-# too long. 
+# too long.
 class SimulationServer < Sandbox::IRBServer
 
   @@simulation_clients = {}
@@ -23,7 +23,7 @@ class SimulationServer < Sandbox::IRBServer
   # Initialize the Simulation, especially the Sandbox and the supporting
   # classes that make up the Daimoku system.
   def initialize(host, port, num_processors=(2**30-1), timeout=0)
-    super(host, port, num_processors, timeout) 
+    super(host, port, num_processors, timeout)
 
     puts "Bringing up sandbox."
     @sandbox = Sandbox.safe(:timeout => 20) #threads more than 20 seconds will time-out
@@ -66,57 +66,57 @@ class SimulationServer < Sandbox::IRBServer
     begin
       simulation_client = SimulationClient.new(client, @sandbox)
       if simulation_client.login?(client) == true
-        @@simulation_clients[simulation_client.session_id] = simulation_client 
+        @@simulation_clients[simulation_client.session_id] = simulation_client
         @@session_ids[simulation_client] = simulation_client.session_id
         case
-      	when simulation_client.name =~ /^[A]rchitect$/
-      	  puts "Architect has logged in."
-      	  mirb = ArchitectIRB.new @sandbox
+        when simulation_client.name =~ /^[A]rchitect$/
+          puts "Architect has logged in."
+          mirb = ArchitectIRB.new @sandbox
           mirb.simulation_client = simulation_client
           mirb.start client
         when simulation_client.name =~ /^[A]gentSmith$/
-      	  puts "Agent has logged in."
-      	  mirb = AgentIRB.new @sandbox
+          puts "Agent has logged in."
+          mirb = AgentIRB.new @sandbox
           mirb.simulation_client = simulation_client
           mirb.start client
         when simulation_client.name =~ /^[A]gentJohnson$/
-      	  puts "Agent has logged in."
-      	  mirb = AgentIRB.new @sandbox
+          puts "Agent has logged in."
+          mirb = AgentIRB.new @sandbox
           mirb.simulation_client = simulation_client
           mirb.start client
         when simulation_client.name =~ /^[A]gentWilliams$/
-      	  puts "Agent has logged in."
-      	  mirb = AgentIRB.new @sandbox
+          puts "Agent has logged in."
+          mirb = AgentIRB.new @sandbox
           mirb.simulation_client = simulation_client
           mirb.start client
         when simulation_client.name =~ /^[K]eyMaker$/
-      	  puts "Agent has logged in."
-      	  mirb = NPCirb.new @sandbox
+          puts "Agent has logged in."
+          mirb = NPCirb.new @sandbox
           mirb.simulation_client = simulation_client
           mirb.start client
         when simulation_client.name =~ /^Oracle$/
-      	  puts "Agent has logged in."
-      	  mirb = NPCirb.new @sandbox
+          puts "Agent has logged in."
+          mirb = NPCirb.new @sandbox
           mirb.simulation_client = simulation_client
           mirb.start client
         when simulation_client.name =~ /^Seraph$/
-      	  puts "Agent has logged in."
-      	  mirb = NPCirb.new @sandbox
+          puts "Agent has logged in."
+          mirb = NPCirb.new @sandbox
           mirb.simulation_client = simulation_client
           mirb.start client
         when simulation_client.name =~ /^Merovingian$/
-      	  puts "Agent has logged in."
-      	  mirb = NPCirb.new @sandbox
+          puts "Agent has logged in."
+          mirb = NPCirb.new @sandbox
           mirb.simulation_client = simulation_client
           mirb.start client
         else
           mirb = SimulationIRB.new(@sandbox)
-      	  mirb.simulation_client = simulation_client
-      	  mirb.start(client)
+          mirb.simulation_client = simulation_client
+          mirb.start(client)
         end
-    end
+      end
     rescue EOFError,Errno::ECONNRESET,Errno::EPIPE,Errno::EINVAL,Errno::EBADF
-      client.close unless client.closed? 
+      client.close unless client.closed?
     rescue Errno::EMFILE
       reap_dead_workers('too many files')
     rescue Object
@@ -125,7 +125,7 @@ class SimulationServer < Sandbox::IRBServer
       client.puts "#{Time.now}: ERROR." if client.closed? == false && client
     ensure
       puts "Ensuring logout of #{simulation_client.name}"
-      @@simulation_clients.delete simulation_client.session_id if simulation_client  
+      @@simulation_clients.delete simulation_client.session_id if simulation_client
       @@session_ids.delete simulation_client if simulation_client
       simulation_client.logout if simulation_client
       client.close unless client.closed?

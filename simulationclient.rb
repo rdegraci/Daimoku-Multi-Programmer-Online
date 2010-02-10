@@ -11,7 +11,7 @@ class SimulationClient
 
   config = YAML.load_file '/usr/local/daimoku-server/database.yaml'
   @@connection = ActiveRecord::Base.establish_connection(config)
-  
+
   @@peers = PeerConnections.new
 
   # Other parts of the system will need access to the peer simulation clients
@@ -26,18 +26,18 @@ class SimulationClient
     @socket = socket
     @io_id = randnum
     @lego_id = randnum
-    @matrix_character_ref = "" 
+    @matrix_character_ref = ""
     @matrix_character_io = ""
     @player_io = ""
     @matrix_character = ""
   end
- 
+
   # Login the Player and create the game Objects. The game Objects are needed
   # to provide Player IO, to provide a way for the Matrix to send output to the
   # Player, and for the CharacterProxy to interface to the Matrix.
   def login? socket
     logininfo = query socket
-    if logininfo 
+    if logininfo
       @matrix_character_io = "IO#{@name}#{@session_id}"
       build_matrix_io_object
       puts "Creating simulation IO object: #{@matrix_character_io}"
@@ -46,8 +46,8 @@ class SimulationClient
       @matrix_character_ref = "varC#{@name}_#{@session_id}"
       build_character_object
       puts "Creating simulation Character object #{@matrix_character}."
-      
-      # Interface to the database   
+
+      # Interface to the database
       @character_proxy = CharacterProxy.new(@name, @matrix_character_ref, @sandbox, @socket, @matrix_character_io, @session_id)
       @character_proxy.login
 
@@ -56,16 +56,16 @@ class SimulationClient
       puts "Creating simulation Player IO object #{@player_io}."
 
       @character_proxy.look
-      
+
       @character_proxy.announce_arrival
       true
     else
       false
-    end 
+    end
   end
 
   # Called by the SimulationServer when this SimulationClient exits
-  def logout    
+  def logout
     @character_proxy.logout if @character_proxy
   end
 
@@ -76,7 +76,7 @@ class SimulationClient
     (1..20).map { abc[rand(abc.size),1] }.join
   end
 
-  # Creates a random alphanumeric number. 
+  # Creates a random alphanumeric number.
   # Used as part of the naming of the player's IO object
   def randnum
     abc = %{123456789ABCDEFGHIJKLMNPQRSTUVWXYZ123456789}
@@ -90,11 +90,11 @@ class SimulationClient
     client.puts
     client.print "Type your name [alpha numeric only] :"
 
-    name = client.gets 
+    name = client.gets
     return nil if !name
     name.chomp!
     name.gsub!(/[\x00-\x09\x0B\x0C\x0E-\x1F\x80-\xFF]/,'')
-    return nil if name =~ /\W+/ 
+    return nil if name =~ /\W+/
     return nil if name == ""
     name.gsub!(/ /,"")        #no spaces
 
@@ -111,7 +111,7 @@ class SimulationClient
     player = @sandbox.eval %{
       Simplayer.find(:first, :conditions => ['name = ?', '#{name}'])
     }
-  
+
     if player == nil then
       client.puts
       client.print "Do you want to create a new account? [y/Quit] :"
@@ -136,20 +136,20 @@ class SimulationClient
       return nil if !password
       password.chomp!
       password.gsub!(/[\x00-\x09\x0B\x0C\x0E-\x1F\x80-\xFF]/,'')
-      return nil if password =~ /\W+/ 
+      return nil if password =~ /\W+/
       return nil if password == ""
       password.gsub!(/ /,"")        #no spaces
- 
+
       password_session = "T#{password}_#{id}"
       @sandbox.eval %{
         name = '#{name}'
         #{password_session} = '#{password}'
         #{player_session} = Simplayer.make_name(name, #{password_session})
-	name = nil
-	#{password_session} = nil
+        name = nil
+        #{password_session} = nil
       }
       puts "New Account: #{name}"
-      
+
       @name = name
       @password = password
       @session_id = id
@@ -173,13 +173,13 @@ class SimulationClient
         @sandbox.eval %{
           name = '#{name}'
           #{password_session} = '#{password}'
-          #{player_session} = Simplayer.find(:first, :conditions => ['name = ? and password = ?', name, #{password_session}])      
-	  #{password_session} = nil
-	  name = nil
+          #{player_session} = Simplayer.find(:first, :conditions => ['name = ? and password = ?', name, #{password_session}])
+          #{password_session} = nil
+          name = nil
         }
-	@name = name
-	@password = password
-	@session_id = id
+        @name = name
+        @password = password
+        @session_id = id
       end
     end
   end
@@ -241,8 +241,8 @@ class SimulationClient
 
   end
 
-  # Builds the Character object, used inside the Matrix as to manipulate 
-  # and query the database. 
+  # Builds the Character object, used inside the Matrix as to manipulate
+  # and query the database.
   def build_character_object
     # Connect the dynamically created variable to the Character activerecord class
     @sandbox.eval %{
@@ -258,128 +258,128 @@ class SimulationClient
   # available while inside the Matrix
   def build_player_io_object character_proxy
     Kernel::eval( %{
-            class IO#{@name}#{@io_id}
-              @@socket = nil
-	            @@character_proxy = nil
+      class IO#{@name}#{@io_id}
+        @@socket = nil
+        @@character_proxy = nil
 
-              def self.socket= cli
-                @@socket = cli
-              end
-	      
- 	            def self.character_proxy= mp
-		            @@character_proxy = mp
-	            end
+        def self.socket= cli
+          @@socket = cli
+        end
 
-              def self.puts *a
-                @@socket.puts *a
-              end
+        def self.character_proxy= mp
+          @@character_proxy = mp
+        end
 
-	            def self.print *a
-		            @@socket.print  *a
-	            end
+        def self.puts *a
+          @@socket.puts *a
+        end
 
-              #actions
+        def self.print *a
+          @@socket.print  *a
+        end
 
-              def self.look
-                @@character_proxy.look
-              end
-	
-              def self.exits
-                @@character_proxy.exits
-              end
+        #actions
 
-              def self.north
-                @@character_proxy.north
-              end
+        def self.look
+          @@character_proxy.look
+        end
 
-              def self.south
-                @@character_proxy.south
-              end
+        def self.exits
+          @@character_proxy.exits
+        end
 
-              def self.east
-                @@character_proxy.east
-              end
+        def self.north
+          @@character_proxy.north
+        end
 
-              def self.west
-                @@character_proxy.west
-              end
+        def self.south
+          @@character_proxy.south
+        end
 
-              def self.up
-                @@character_proxy.up
-              end
+        def self.east
+          @@character_proxy.east
+        end
 
-              def self.down
-                @@character_proxy.down
-              end
+        def self.west
+          @@character_proxy.west
+        end
 
-	            def self.say text
-                @@character_proxy.say_room text 
-              end
+        def self.up
+          @@character_proxy.up
+        end
 
-              # Important, called by a Builder, to interface to the World Database safely
-              def self.character_name
-                @@character_proxy.name
-              end
-              
-            end
-      },TOPLEVEL_BINDING)
+        def self.down
+          @@character_proxy.down
+        end
+
+        def self.say text
+          @@character_proxy.say_room text
+        end
+
+        # Important, called by a Builder, to interface to the World Database safely
+        def self.character_name
+          @@character_proxy.name
+        end
+
+      end
+    },TOPLEVEL_BINDING)
 
     raise if !@socket
     raise if !character_proxy
 
-      eval %{
-        @sandbox.ref IO#{@name}#{@io_id}
-        IO#{@name}#{@io_id}.socket = @socket
-        IO#{@name}#{@io_id}.character_proxy = character_proxy	
-      }
-      @socket.puts "Creating object IO#{@name}#{@io_id} for IO. i.e. IO#{@name}#{@io_id}.puts 'hello world'" 
-      
-      character_proxy.io_object_name = "IO#{@name}#{@io_id}"
-      
-      
-      #Create LEGO class which will allow Builders, that players create, to interface to the World Database safely
-      Kernel::eval( %{
-                class LEGO#{@name}#{@lego_id}
-                  @@socket = nil
-    	            @@character_proxy = nil
+    eval %{
+      @sandbox.ref IO#{@name}#{@io_id}
+      IO#{@name}#{@io_id}.socket = @socket
+      IO#{@name}#{@io_id}.character_proxy = character_proxy
+    }
+    @socket.puts "Creating object IO#{@name}#{@io_id} for IO. i.e. IO#{@name}#{@io_id}.puts 'hello world'"
 
-                  def self.socket= cli
-                    @@socket = cli
-                  end
+    character_proxy.io_object_name = "IO#{@name}#{@io_id}"
 
-     	            def self.character_proxy= mp
-    		            @@character_proxy = mp
-    	            end
 
-                  def self.puts *a
-                    @@socket.puts *a
-                  end
+    #Create LEGO class which will allow Builders, that players create, to interface to the World Database safely
+    Kernel::eval( %{
+      class LEGO#{@name}#{@lego_id}
+        @@socket = nil
+        @@character_proxy = nil
 
-    	            def self.print *a
-    		            @@socket.print  *a
-    	            end
-                end
-                
-                # Important, called by a Builder, to interface to the World Database safely
-                def self.character_name
-                  @@character_proxy.name
-                end
-                }, TOPLEVEL_BINDING)
-                
-      eval %{
-        @sandbox.ref LEGO#{@name}#{@lego_id}
-        LEGO#{@name}#{@lego_id}.socket = @socket
-        LEGO#{@name}#{@lego_id}.character_proxy = character_proxy	
-      }
-      @player_lego_io = "LEGO#{@name}#{@lego_id}"
-      @socket.puts "Creating object LEGO#{@name}#{@lego_id} for extensions . i.e. h = HardLine.new(LEGO#{@name}#{@lego_id})"
-       
+        def self.socket= cli
+          @@socket = cli
+        end
+
+        def self.character_proxy= mp
+          @@character_proxy = mp
+        end
+
+        def self.puts *a
+          @@socket.puts *a
+        end
+
+        def self.print *a
+          @@socket.print  *a
+        end
+      end
+
+      # Important, called by a Builder, to interface to the World Database safely
+      def self.character_name
+        @@character_proxy.name
+      end
+    }, TOPLEVEL_BINDING)
+
+    eval %{
+      @sandbox.ref LEGO#{@name}#{@lego_id}
+      LEGO#{@name}#{@lego_id}.socket = @socket
+      LEGO#{@name}#{@lego_id}.character_proxy = character_proxy
+    }
+    @player_lego_io = "LEGO#{@name}#{@lego_id}"
+    @socket.puts "Creating object LEGO#{@name}#{@lego_id} for extensions . i.e. h = HardLine.new(LEGO#{@name}#{@lego_id})"
+
   end
 
   # The following methods are called by the SimulationIRB, to implement a simple commandline interface
   # by letting the SimulationIRB directly manipulate the CharacterProxy
 
-  # Called by the SimulationIRB, for sharing code 
+  # Called by the SimulationIRB, for sharing code
   def say_code code
     @character_proxy.say_code(code)
   end
@@ -388,7 +388,7 @@ class SimulationClient
   def look
     @character_proxy.look
   end
-  
+
   # Called by the SimulationIRB, for cataloging inventory
   def inventory
     @character_proxy.inventory
@@ -411,14 +411,14 @@ class SimulationClient
 
   # Called by the SimulationIRB, for going east
   def east
-   @character_proxy.east
+    @character_proxy.east
   end
 
   # Called by the SimulationIRB, for going west
   def west
-   @character_proxy.west
+    @character_proxy.west
   end
-  
+
   # Called by the SimulationIRB, for going up
   def up
     @character_proxy.up
@@ -433,22 +433,22 @@ class SimulationClient
   def io
     @character_proxy.io
   end
-  
+
   # Called by the SimulationIRB, for speaking to the room
   def say text
     @character_proxy.say_room text
   end
-  
+
   # Called by the SimulationIRB, for emoting to the room
   def emote text
     @character_proxy.emote_room text
   end
-  
+
   # Called by the SimulationIRB, for taking an object
   def take name
     @character_proxy.take name
   end
-  
+
   # Called by the SimulationIRB, for dropping an object
   def drop name
     @character_proxy.drop name

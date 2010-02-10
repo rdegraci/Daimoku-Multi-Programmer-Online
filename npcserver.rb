@@ -4,17 +4,17 @@ require 'yaml'
 
 # Used to connect the Agent to the notification system and to log the Agent into the System
 module AgentNotification
-  
+
   CONFIG = YAML.load_file 'npc.yaml'
-  
+
   # Agents use Distributed Ruby to send/recieve messages to each other and the System
   def connect_to_hub
     puts "Connecting to Notification Hub #{CONFIG['hub']['server']}:#{CONFIG['hub']['port']}"
     @hub = DRbObject.new(nil, "druby://#{CONFIG['hub']['server']}:#{CONFIG['hub']['port']}")
     puts "Connected!"
   end
-  
-  # Connects to the simulation. 
+
+  # Connects to the simulation.
   def connect_to_simulation(name, password)
     puts "Connectin to Simulation"
     begin
@@ -39,23 +39,23 @@ module LeadAgent
 
   # The runloop of the Agent Smith
   def runloop
-   config = YAML.load_file 'npc.yaml' 
-   puts "Entering Agent Smith Run Loop"
+    config = YAML.load_file 'npc.yaml'
+    puts "Entering Agent Smith Run Loop"
     while true
       if @server == nil then
         puts "Attempting to reconnect Agent Smith to Simulation"
-	sleep 5
+        sleep 5
         connect_to_simulation("#{config['smith']['username']}", "#{config['smith']['password']}")
       end
       begin
-         eval %{
-		       #{config['leadagent']['script']}
-         }	
+        eval %{
+          #{config['leadagent']['script']}
+        }
       rescue
-       puts "Error in the LeadAgent script, reconnecting in 10 seconds"	
-       @server = nil
-       sleep 10
-       break
+        puts "Error in the LeadAgent script, reconnecting in 10 seconds"
+        @server = nil
+        sleep 10
+        break
       end
       puts "#{Time.now} Agent Smith: #{@hub.warn}"  if @hub.warn.empty? == false
       puts "#{Time.now} Agent Smith: #{@hub.info}"  if @hub.info.empty? == false
@@ -75,14 +75,14 @@ module AssistantAgent
         connect_to_simulation("#{config['smith']['username']}", "#{config['smith']['password']}")
       end
       begin
-         eval %{
-		       #{config['assistantagent']['script']}
-         }	
+        eval %{
+          #{config['assistantagent']['script']}
+        }
       rescue
-       puts "Error in the Assistant Agent script, reconnecting in 10 seconds"	
-       @server = nil
-       sleep 10
-       break
+        puts "Error in the Assistant Agent script, reconnecting in 10 seconds"
+        @server = nil
+        sleep 10
+        break
       end
       puts "#{Time.now} Agent Johnson: #{@hub.warn}"  if @hub.warn.empty? == false
       puts "#{Time.now} Agent Johnson: #{@hub.info}"  if @hub.info.empty? == false
@@ -102,14 +102,14 @@ module SpecialAgent
         connect_to_simulation("#{config['smith']['username']}", "#{config['smith']['password']}")
       end
       begin
-         eval %{
-		       #{config['specialagent']['script']}
-         }	
+        eval %{
+          #{config['specialagent']['script']}
+        }
       rescue
-       puts "Error in the Special Agent script, reconnecting in 10 seconds."	
-       @server = nil
-       sleep 10
-       break
+        puts "Error in the Special Agent script, reconnecting in 10 seconds."
+        @server = nil
+        sleep 10
+        break
       end
       puts "#{Time.now} Agent Williams: #{@hub.warn}" if @hub.warn.empty? == false
       puts "#{Time.now} Agent Williams: #{@hub.info}"  if @hub.info.empty? == false
@@ -142,7 +142,7 @@ class Johnson
 end
 
 # Williams is the name, Agent Williams
-class Williams 
+class Williams
   CONFIG = YAML.load_file 'npc.yaml'
   include AgentNotification
   include SpecialAgent
@@ -155,22 +155,22 @@ end
 
 # NPCManager manages the runloops of the NPCs. Each NPC is threaded.
 class NPCManager
-  
+
   # initialize the NPCManager
   def initialize(host, port)
     DRb.start_service
-    puts "Started Drb on " 
+    puts "Started Drb on "
   end
-  
+
   # Create the NPCs and start their runloops
   def run
     @acceptor = Thread.new do
       puts "Starting Agents"
       a = Thread.new { @smith = Smith.new ; @smith.runloop }
       a.abort_on_exception = true
-      b = Thread.new { @johnson = Johnson.new ; @johnson.runloop } 
+      b = Thread.new { @johnson = Johnson.new ; @johnson.runloop }
       b.abort_on_exception = true
-      c = Thread.new { @williams = Williams.new ; @williams.runloop } 
+      c = Thread.new { @williams = Williams.new ; @williams.runloop }
       c.abort_on_exception = true
       while true
         sleep 5

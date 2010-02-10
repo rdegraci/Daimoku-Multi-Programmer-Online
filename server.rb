@@ -25,7 +25,7 @@ puts    "(at your option) any later version."
 puts
 puts    "This program is distributed in the hope that it will be useful,"
 puts    "but WITHOUT ANY WARRANTY; without even the implied warranty of"
-puts    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the" 
+puts    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
 puts    "GNU General Public License for more details."
 puts
 puts    "You should have received a copy of the GNU General Public License"
@@ -34,7 +34,7 @@ puts
 puts
 puts
 puts    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-puts 
+puts
 puts
 
 

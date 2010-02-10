@@ -17,29 +17,29 @@ class HardLine
 
   @@urls = []
 
-  # Hide the Sandbox 
+  # Hide the Sandbox
   def self.sandbox= sb
-   @@matrix =  sb
+    @@matrix =  sb
   end
 
-  # Requests a URL 
+  # Requests a URL
   def request url
     url.gsub!(/[\x00-\x09\x0B\x0C\x0E-\x1F\x80-\xFF]/,'') #no non printable characters
     @@urls << url
 
-      #escape 
-      cooked = 'http://' + url
-      @code = `curl #{url}`
-      interface = @interface.to_s
-      @code.gsub!('puts',"#{interface}.puts")  #replace external puts with the IO object
-      @code.gsub!('all_symbols','class')  #no peeking at the symbol table
-      puts "#{@code}"
+    #escape
+    cooked = 'http://' + url
+    @code = `curl #{url}`
+    interface = @interface.to_s
+    @code.gsub!('puts',"#{interface}.puts")  #replace external puts with the IO object
+    @code.gsub!('all_symbols','class')  #no peeking at the symbol table
+    puts "#{@code}"
   end
 
   # Evaluate the outside code
   def eval
     @@matrix.eval %"
-      eval '#{@code}'
+    eval '#{@code}'
     "
   end
 
@@ -52,7 +52,7 @@ class HardLine
   def initialize io
     @interface = io
   end
- 
+
   # prints out a history of URLs that have been accessed
   def history
     @@urls.each do |u|
@@ -79,7 +79,7 @@ end
 
 # Imported into the Simulation
 #
-# The handler class for the SocketClient class. 
+# The handler class for the SocketClient class.
 # The Player should implement on_input to set up any
 # sort of client-side protocol that the Player would be interested in.
 #
@@ -99,7 +99,7 @@ class SocketClientHandler
   end
 
   # Initialize with the Player's IO object, for example:
-  # 
+  #
   # a = SocketClientHandler.new IOjoe128384H23
   #
   def initialize io
@@ -113,7 +113,7 @@ end
 #
 # A line-oriented socket client.  This client uses a SocketClientHandler
 #
-# 
+#
 # class MySocketClientHandler < SocketClientHandler
 #   def on_input line
 #     @io.puts line
@@ -126,15 +126,15 @@ class SocketClient
 
   # The matrix is the sandbox
   def self.sandbox= sb
-   @@matrix =  sb
+    @@matrix =  sb
   end
 
   # Initialize with the Player's IO object
   def initialize(handler, url = '127.0.0.1' , port = 80, portoffset = 0)
     @handler = handler
-    port = 80 if port != 2010  
+    port = 80 if port != 2010
     port = 2010 if port != 80
-    portoffset = 0 if portoffset < 0 
+    portoffset = 0 if portoffset < 0
     portoffset = 255 if portoffset > 255
 
     @client = TCPSocket.new(url, (port + portoffset))
@@ -144,19 +144,19 @@ class SocketClient
         begin
           while @client.closed? == false do
             begin
-	      result = @client.gets.gsub(/[\x00-\x09\x0B\x0C\x0E-\x1F\x80-\xFF]/,'') #remove nonprintables
-	      puts result
+              result = @client.gets.gsub(/[\x00-\x09\x0B\x0C\x0E-\x1F\x80-\xFF]/,'') #remove nonprintables
+              puts result
               @client.puts(@handler.on_input(@client))
             rescue
-	      raise StopClient, "Error in SocketClient."
-   	    end
-	  end
+              raise StopClient, "Error in SocketClient."
+            end
+          end
           puts "Closing socket connection."
           client.close if not client.closed?
           thread.abort_on_exception = true
         rescue StopClient
           @client.close if not @client.closed?
-          break 
+          break
         rescue Errno::ECONNABORTED
           puts "Remote Server socket abort. Closing socket."
           # client closed the socket even before accept
@@ -166,12 +166,12 @@ class SocketClient
       end
     end
   end
-        
+
 end
 
 
 # Imported into the Simulation
-# 
+#
 # The handler class for the SocketServer class.
 # The Player should implement on_input to set up any
 # sort of server-side protocol that the Player would be interested in
@@ -191,11 +191,11 @@ class SocketServerHandler
   def on_input line
     @io.puts line
     sleep 10
-    "PONG"            
+    "PONG"
   end
 
   # Initialize with the Player's IO object, for example:
-  # 
+  #
   # ssh = SocketServerHandler.new IOjoe3845T23N
   #
   def initialize io
@@ -223,15 +223,15 @@ class ChatServer < GServer
     super(*args)
     @handler = nil
   end
- 
+
   def handler= h
     @handler = h
   end
-  
+
   def serve(io)
     io.puts("Daimoku Online. Ready.")
-    loop do 
-      # Every 5 seconds check to see if we are receiving any data 
+    loop do
+      # Every 5 seconds check to see if we are receiving any data
       if IO.select([io], nil, nil, 2)
 
         #remove nonprintable characters
@@ -240,7 +240,7 @@ class ChatServer < GServer
         io.puts(@handler.on_input(line))
       end
     end
-    
+
   end
 end
 
@@ -255,7 +255,7 @@ end
 #
 class SocketServer
 
-  @@socketservers = {} 
+  @@socketservers = {}
 
   # Read access to the servers
   def self.servers
@@ -269,12 +269,12 @@ class SocketServer
 
   # The sandbox is the simulation
   def self.sandbox= sb
-   @@matrix = sb
+    @@matrix = sb
   end
 
   #
-  # Initalize with an initialized SocketServerHandler 
-  # 
+  # Initalize with an initialized SocketServerHandler
+  #
   # port offset should be from 0 to 255
   #
   #  ssh = SocketServerHandler.new IOjoe3845T23N

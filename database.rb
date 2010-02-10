@@ -24,7 +24,7 @@ module AutomationProcessor
 
   yaml = YAML.load_file '/usr/local/daimoku-server/database.yaml'
   @@connection = ActiveRecord::Base.establish_connection(yaml)
-        
+
   # Initialize with the Simulation
   def initialize box
     @box = box
@@ -43,7 +43,7 @@ end
 # provide services to the Player (for example a Person can represent an FTP site)
 class People
   include AutomationProcessor
-  
+
   # Loop every 10 minutes
   def tick
     sleep 10
@@ -53,8 +53,8 @@ class People
       people.each do |aperson|
         begin
           @box.eval(aperson.script) if aperson.script
-	      rescue Sandbox::Exception, Sandbox::TimeoutError => e
-            puts  e, "\n"
+        rescue Sandbox::Exception, Sandbox::TimeoutError => e
+          puts  e, "\n"
         end
       end
       sleep 600
@@ -72,7 +72,7 @@ class Characters
   def tick
     sleep 10
     while true
-      puts "Processing Characters" 
+      puts "Processing Characters"
       chars = Simcharacter.find(:all, :conditions => ['hitpoints < ?', 100])
       chars.each do |cc|
         begin
@@ -82,7 +82,7 @@ class Characters
           cc.health = health
           cc.save!
         rescue
-	        puts "Error trying to process Characters" 
+          puts "Error trying to process Characters"
         end
       end
       sleep 10
@@ -122,8 +122,8 @@ class Things
       things.each do |thing|
         begin
           @box.eval(thing.script) if thing.script
-            rescue Sandbox::Exception, Sandbox::TimeoutError => e
-            puts  e, "\n"
+        rescue Sandbox::Exception, Sandbox::TimeoutError => e
+          puts  e, "\n"
         end
       end
       sleep 600
@@ -137,8 +137,8 @@ end
 
 
 
-  
 
 
 
-    
+
+

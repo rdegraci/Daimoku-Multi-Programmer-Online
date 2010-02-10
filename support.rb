@@ -49,35 +49,35 @@ class TheMatrix
     @@matrix.ref ActiveRecord::Errors
     @@matrix.ref ActiveRecord::ConnectionAdapters
     @@matrix.ref ActiveRecord::ConnectionAdapters::ConnectionPool
- 
+
     @@matrix.ref Simcharacter
-    
+
     # necessary to reference since we need to change the state of the player
-    # note that we obfuscate by calling the class 'Simplayer' 
+    # note that we obfuscate by calling the class 'Simplayer'
     @@matrix.ref Simplayer
-    
+
     @@matrix.ref Simperson
     @@matrix.ref Simplace
     @@matrix.ref Simthing
-        
+
     # Builders
     # CharacterBuilder.proxy = Simcharacter.new
     # @@matrix.ref CharacterBuilder
-    
+
     PlaceBuilder.proxy = Simplace.new
     @@matrix.ref PlaceBuilder
-    
+
     # PlayerBuilder.proxy = Simplayer.new
     # @@matrix.ref PlayerBuilder
-    # 
+    #
     # PersonBuilder.proxy = Simperson.new
     # @@matrix.ref PersonBuilder
-    
+
     Thinger.proxy = Simthing.new
     @@matrix.ref Thinger
-    
-    
-    
+
+
+
     @@matrix.ref Simdoor
     @@matrix.ref Simkey
     @@matrix.ref Simnorth
@@ -87,7 +87,7 @@ class TheMatrix
     @@matrix.ref Simup
     @@matrix.ref Simdown
     @@matrix.ref Simmap
-#    @@matrix.ref Connections    
+    #    @@matrix.ref Connections
 
 
     # Simulation extensions
@@ -100,12 +100,12 @@ class TheMatrix
 
     SocketServer::sandbox = @@matrix
     @@matrix.ref SocketServer
- 
+
     SocketClient::sandbox = @@matrix
     @@matrix.ref SocketClient
 
     @@matrix.import SocketServerHandler
-    @@matrix.import SocketClientHandler 
+    @@matrix.import SocketClientHandler
 
   end
 
@@ -124,10 +124,10 @@ end
 #  thesource.evaluate "apple = Apple.new" # instantiates the Apple class, outside the Simulation, from the inside!
 #
 class TheSource
-  
+
   # Hides the Simulation from direct manipulation
   def self.sandbox= s
-      @@sandbox = s
+    @@sandbox = s
   end
 
   def initialize
@@ -142,7 +142,7 @@ class TheSource
   # *WARNING*
   # Changes the source code of the Simulation Server from _inside_ the Simulation
   #
-  # Evaluate the source change into the TOP LEVEL BINDING of the Simulation Server 
+  # Evaluate the source change into the TOP LEVEL BINDING of the Simulation Server
   def self.evaluate change
     Kernel::eval('#{change}', TOPLEVEL_BINDING)
   end
@@ -167,7 +167,7 @@ class TheSystem
 
   # Hide the simulation
   def self.sandbox= s
-      @@sandbox = s
+    @@sandbox = s
   end
 
   def initialize
@@ -192,7 +192,7 @@ class TheSystem
   # Copy class into the Simulation, with its own definition
   def self.neo_request klassname
     begin
-      Kernel::eval("TheSystem.magicbox.import #{klassname}", TOPLEVEL_BINDING) 
+      Kernel::eval("TheSystem.magicbox.import #{klassname}", TOPLEVEL_BINDING)
     rescue
       puts "Neo requesting a klass that does not exist."
     end
@@ -204,4 +204,4 @@ end
 
 
 
-    
+

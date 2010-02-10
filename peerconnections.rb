@@ -15,12 +15,12 @@ class PeerConnections
     puts "sytem_emote #{text}"
     @@proxies.each_pair do |k,v|
       raise if v.socket.closed? == true
-      v.socket.puts "\n#The System: #{text}" if (CharacterProxy::is_hack_mode(k) == true) 
+      v.socket.puts "\n#The System: #{text}" if (CharacterProxy::is_hack_mode(k) == true)
     end
   end
 
 
-  # Removes the CharacterProxy that is represented by the characterproxy's sessionid 
+  # Removes the CharacterProxy that is represented by the characterproxy's sessionid
   def remove characterproxy
     return if characterproxy.name == "architect"
     @@proxies[characterproxy.session_id] = nil
@@ -49,7 +49,7 @@ class PeerConnections
   def say_private(session_id, text)
     raise if !session_id
     @@proxies[session_id].socket.puts(text) if @@proxies[session_id]
-    puts "say_private #{text} to #{@@proxies[session_id].name}" if @@proxies[session_id]  
+    puts "say_private #{text} to #{@@proxies[session_id].name}" if @@proxies[session_id]
   end
 
   # Global Emote to everyone in the PeerConnections
