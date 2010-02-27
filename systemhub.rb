@@ -4,7 +4,14 @@ require 'drb'
 require 'hub.rb'
 require 'yaml'
 
-config = YAML.load_file 'drb.yaml'
 
-DRb.start_service("druby://#{config['server']}:#{config['port']}", SystemHub.new)
-DRb.thread.join
+class SystemHubLoader
+
+  def initialize
+    config = YAML.load_file('/usr/local/daimoku-server/drb.yaml')
+
+    @drb = DRb.start_service("druby://#{config['server']}:#{config['port']}", SystemHub.new)
+
+  end
+end
+

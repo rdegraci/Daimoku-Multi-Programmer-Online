@@ -10,7 +10,7 @@ class CharacterProxy
   attr_writer :io_object_name
 
   # character_matrix_io is used by the Sandbox to send output back to the Player's socket
-  def initialize(name, matrix_character, sandbox, socket, character_matrix_io, session_id)
+  def initialize(name, matrix_character, sandbox, socket, character_matrix_io, session_id, simulation_client)
     @matrix_character = matrix_character
     @sandbox = sandbox
     @socket = socket
@@ -21,6 +21,10 @@ class CharacterProxy
     #There must be a better way
     @peers = SimulationClient::peer_connections
     raise if !@peers
+
+    #Used to clean up the simulation client
+    #When the System forces a Player deletion
+    @simulation_client = simulation_client
 
     @name = name
   end
@@ -57,6 +61,7 @@ class CharacterProxy
   def login
     puts "matrix character is #{@matrix_character}"
     puts "#{@matrix_character.class}"
+    puts "Saving sessionid #{@session_id} into Simplayer"
     @sandbox.eval %{
       name = '#{@name}'
       #{@matrix_character} = Simcharacter.find(:first, :conditions => ['name = ?', name], :include => [:simplayer])
@@ -75,10 +80,40 @@ class CharacterProxy
     @sandbox.eval %{
       name = '#{@name}'
       #{@matrix_character} = Simcharacter.find(:first, :conditions => ['name = ?', name], :include => [:simplayer])
-      #{@matrix_character}.logout
+      #{@matrix_character}.logout if #{@matrix_character} != nil
     }
 
     @peers.remove self
+  end
+
+  # Called by TheReaper to force logout a dead Player
+  def system_logout
+    puts "matrix_character is #{@matrix_character}"
+    puts "#{@matrix_character.class}"
+
+    @sandbox.eval %{
+      name = '#{@name}'
+      #{@matrix_character} = Simcharacter.find(:first, :conditions => ['name = ?', name], :include => [:simplayer])
+      #{@matrix_character}.logout
+    }
+
+    @simulation_client.system_cleanup
+
+    #Clean up the
+    @sandbox.eval %{
+      #{@matrix_character} = nil
+      #{@characterio} = nil
+    }
+
+    @peers.remove self
+
+    begin
+      #closing the socket will always generate an error
+      @socket.close
+    rescue
+      puts "Force close socket of Player:#{@name}"
+    end
+
   end
 
   # Describe exits from the current Room. Called by the SimulationClient
@@ -198,6 +233,35 @@ class CharacterProxy
     @socket.puts "You say, #{text}"
   end
 
+  # Agent Punch a Player, oh yeah!
+  def agent_punch(name, damage)
+    @target_punch = name
+    @damage = damage
+
+    cooked_text = "\n#{@name} punches #{@target_punch} in the face, with his fist. [ Damage: -#{@damage/5} ]"
+    sessions = @sandbox.eval %{
+      name = '#{@target_punch}'
+      #{@matrix_character} = Simcharacter.find(:first, :conditions => ['name = ?', name], :include => [{:simperson => :simplace}])
+      current_hp = #{@matrix_character}.hp
+      current_hp = current_hp - #{@damage}
+      #{@matrix_character}.hp = current_hp
+      #{@matrix_character}.hp = 0 if #{@matrix_character}.hp < 1
+      #{@matrix_character}.save!
+
+      # Add the target session as the last element
+      watching = #{@matrix_character}.current_room_sessionids +  Array.new.<<(#{@matrix_character}.simplayer.sessionid)
+    }
+
+    # Tell players in the room of the action, except for the Agent and the Target
+    sessions.each do |s|
+      @peers.say_private(s, cooked_text) if (s != @session_id) && (s != sessions.last)
+    end
+
+    cooked_text = "\n#{@name} punches _you_ in the face, with his fist! [ Damage: -#{damage} ]"
+    @peers.say_private(sessions.last, cooked_text)
+    @socket.puts "You punch, #{@target_punch} for #{damage} points of damage"
+  end
+
 
   # Emote a message to the current room
   # Send the message to each Player's socket
@@ -276,4 +340,5 @@ class CharacterProxy
   end
 
 end
+
 

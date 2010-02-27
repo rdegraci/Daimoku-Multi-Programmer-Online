@@ -22,9 +22,27 @@ class PeerConnections
 
   # Removes the CharacterProxy that is represented by the characterproxy's sessionid
   def remove characterproxy
-    return if characterproxy.name == "architect"
+    return if characterproxy.name == "Architect"
     @@proxies[characterproxy.session_id] = nil
     @@proxies.delete characterproxy.session_id
+  end
+
+
+
+  # Called by TheReaper, as part of Player death
+  def disconnect sessionid
+    puts "System reaping sessionid: #{sessionid}"
+    characterproxy = @@proxies[sessionid]
+    return if !characterproxy
+    characterproxy.socket.puts "\n Your body can not live without your mind." if characterproxy.socket && characterproxy.socket.closed? == false
+    characterproxy.system_logout
+  end
+
+  def system_say(sessionid, message)
+    characterproxy = @@proxies[sessionid]
+    return if !characterproxy
+    puts "System saying: #{message} to  #{sessionid}"
+    characterproxy.socket.puts "\n #{message}"
   end
 
   # Adds the CharacterProxy that is represented by the characterproxy's sessionid

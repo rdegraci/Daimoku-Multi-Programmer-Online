@@ -43,6 +43,7 @@ class TheMatrix
     @@matrix.ref ActiveRecord::Associations::BelongsToAssociation
     @@matrix.ref ActiveRecord::Associations::HasOneAssociation
     @@matrix.ref ActiveRecord::Associations::HasManyAssociation
+    @@matrix.ref ActiveSupport::OrderedHash
     @@matrix.ref ActiveRecord::Reflection
     @@matrix.ref ActiveRecord::Reflection::AssociationReflection
     @@matrix.ref ActiveSupport::Dependencies

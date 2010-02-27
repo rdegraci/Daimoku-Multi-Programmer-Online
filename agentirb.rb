@@ -9,12 +9,9 @@ class AgentIRB < Sandbox::IRB
   end
 
   def start(io)
-
     raise if !@simulation_client  #must set simulation client
-
     scanner = RubyLex.new
     scanner.exception_on_syntax_error = false
-
     scanner.set_prompt do |ltype, indent, continue, line_no|
       if ltype
         f = @prompt[:string]
@@ -28,7 +25,6 @@ class AgentIRB < Sandbox::IRB
       f = "" unless f
       @p = prompt(f, ltype, indent, line_no)
     end
-
     scanner.set_input(io) do
       signal_status(:IN_INPUT) do
         io.print @p
@@ -40,23 +36,26 @@ class AgentIRB < Sandbox::IRB
         end
       end
     end
-
     scanner.each_top_level_statement do |line, line_no|
       signal_status(:IN_EVAL) do
         line.untaint
-
         line.chomp!
         puts line
         p line
         return if line == "quit"
         return if line == 'q'
-
         begin
           val = box_eval(line)
           io.puts @prompt[:return] % [val.inspect]
         rescue Sandbox::Exception, Sandbox::TimeoutError => e
           # Possible MUD command
           case
+          when line =~ /^AgentPunch /
+            cooked = line.gsub(/^AgentPunch /,'')
+            @simulation_client.punch cooked
+          when line =~ /^AgentTeleport /
+            cooked = line.gsub(/^AgentPunch /,'')
+            @simulation_client.teleport cooked
           when line =~ /^take /
             cooked = line.gsub(/^take /,'')
             @simulation_client.take cooked
@@ -94,7 +93,6 @@ class AgentIRB < Sandbox::IRB
             io.puts "Commands:\n l-ook\n exits\n n-orth\n s-outh\n e-ast\n w-est\n u-p\n d-own\n io\n take\n drop\n emote\n i-nventory\n"
             io.puts "Your IO object is #{@simulation_client.player_io}. i.e. #{@simulation_client.player_io}.puts 'hello world'"
             io.puts "Your LEGO object is #{@simulation_client.player_lego_io }. i.e. h = HardLine.new(#{@simulation_client.player_lego_io})"
-
             io.puts
           else
             # Not a MUD command, therefore handle the error output normally
@@ -105,5 +103,6 @@ class AgentIRB < Sandbox::IRB
     end
   end
 end
+
 
 

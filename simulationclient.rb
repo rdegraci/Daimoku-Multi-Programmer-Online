@@ -1,6 +1,8 @@
 require 'characterproxy.rb'
 require 'peerconnections.rb'
 require 'yaml'
+require 'digest/sha1'
+
 
 # The SimulationClient handles the login of the Player and also creates the
 # various Objects that the Player uses for IO, for the Simulation to use for output to
@@ -30,6 +32,7 @@ class SimulationClient
     @matrix_character_io = ""
     @player_io = ""
     @matrix_character = ""
+    @player_session = ""
   end
 
   # Login the Player and create the game Objects. The game Objects are needed
@@ -38,20 +41,20 @@ class SimulationClient
   def login? socket
     logininfo = query socket
     if logininfo
-      @matrix_character_io = "IO#{@name}#{@session_id}"
+      @matrix_character_io = "MCIO_#{@session_id}"
       build_matrix_io_object
       puts "Creating simulation IO object: #{@matrix_character_io}"
 
-      @matrix_character = "C#{@name}_#{@session_id}"
-      @matrix_character_ref = "varC#{@name}_#{@session_id}"
+      @matrix_character = "CH_#{@session_id}"
+      @matrix_character_ref = "ref#{@session_id}"
       build_character_object
       puts "Creating simulation Character object #{@matrix_character}."
 
       # Interface to the database
-      @character_proxy = CharacterProxy.new(@name, @matrix_character_ref, @sandbox, @socket, @matrix_character_io, @session_id)
+      @character_proxy = CharacterProxy.new(@name, @matrix_character_ref, @sandbox, @socket, @matrix_character_io, @session_id, self)
       @character_proxy.login
 
-      @player_io = "IO#{@name}#{@io_id}"
+      @player_io = "PIO_#{name}_#{@io_id}"
       build_player_io_object @character_proxy
       puts "Creating simulation Player IO object #{@player_io}."
 
@@ -64,6 +67,19 @@ class SimulationClient
     end
   end
 
+  # Called by the CharacterProxy, as part of clean up when
+  # a Player is reaped.
+  def system_cleanup
+    @sandbox.eval %{
+      #{@matrix_character_ref} = nil
+      #{@matrix_character_io} = nil
+      #{@player_io} = nil
+      #{@matrix_character} = nil
+      #{@player_session} = nil
+    }
+  end
+
+
   # Called by the SimulationServer when this SimulationClient exits
   def logout
     @character_proxy.logout if @character_proxy
@@ -73,6 +89,12 @@ class SimulationClient
   # the Player.
   def randid
     abc = %{ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz}
+    (1..20).map { abc[rand(abc.size),1] }.join
+  end
+
+  # Creates a random alphanumeric string. Uses as a local variable
+  def randid_lc
+    abc = %{abcdefghijklmnopqrstuvwxyz}
     (1..20).map { abc[rand(abc.size),1] }.join
   end
 
@@ -96,7 +118,7 @@ class SimulationClient
     name.gsub!(/[\x00-\x09\x0B\x0C\x0E-\x1F\x80-\xFF]/,'')
     return nil if name =~ /\W+/
     return nil if name == ""
-    name.gsub!(/ /,"")        #no spaces
+    name.gsub!(/ /,"_")        #no spaces
 
     puts "Login detected."
 
@@ -105,8 +127,8 @@ class SimulationClient
     player = nil
     character =nil
 
-    player_session = "P#{name}_#{id}"
-    puts "Creating player session #{player_session}"
+    @player_session = "PLS_#{id}"
+    puts "Creating player session #{@player_session}"
 
     player = @sandbox.eval %{
       Simplayer.find(:first, :conditions => ['name = ?', '#{name}'])
@@ -140,11 +162,13 @@ class SimulationClient
       return nil if password == ""
       password.gsub!(/ /,"")        #no spaces
 
-      password_session = "T#{password}_#{id}"
+      encrypted_password = Digest::SHA1.hexdigest(password)
+
+      password_session = "#{randid_lc}#{id}"
       @sandbox.eval %{
         name = '#{name}'
-        #{password_session} = '#{password}'
-        #{player_session} = Simplayer.make_name(name, #{password_session})
+        #{password_session} = '#{encrypted_password}'
+        #{@player_session} = Simplayer.make_name(name, #{password_session})
         name = nil
         #{password_session} = nil
       }
@@ -166,19 +190,13 @@ class SimulationClient
       return nil if password == ""
       password.gsub!(/ /,"")        #no spaces
 
-      if password != player.password then
+      encrypted_password = Digest::SHA1.hexdigest(password)
+
+      if encrypted_password != player.password then
         return nil
       else
-        password_session = "T#{password}_#{id}"
-        @sandbox.eval %{
-          name = '#{name}'
-          #{password_session} = '#{password}'
-          #{player_session} = Simplayer.find(:first, :conditions => ['name = ? and password = ?', name, #{password_session}])
-          #{password_session} = nil
-          name = nil
-        }
         @name = name
-        @password = password
+        @password = encrypted_password
         @session_id = id
       end
     end
@@ -186,10 +204,13 @@ class SimulationClient
 
   # Builds the IO Object to handle messages from the Matrix to the Player
   def build_matrix_io_object
+
+    puts "Begin evaluating Matrix IO Object MCIO"
+
     # Create an IO klass so that we can write to the Player's socket from within the sandbox
     # as well as the ability to send messages to/fromm the Players peers
     Kernel::eval( %{
-      class IO#{@name}#{@session_id}
+      class MCIO_#{@session_id}
         @@client = nil
         @@peers = nil
 
@@ -229,15 +250,20 @@ class SimulationClient
 
       end
     },TOPLEVEL_BINDING)
+    puts "Completed evaluating MCIO class"
+
+    puts 'Referencing the MCIO within the Simulation'
 
     # Reference the IO klass so that it exists within the sandbox
     # and setup the output socket and the access to the peer player sockets
     eval %{
-      @sandbox.ref IO#{@name}#{@session_id}
-      IO#{@name}#{@session_id}.client @socket
-      IO#{@name}#{@session_id}.peers @@peers
-      IO#{@name}#{@session_id}.session_id @session_id
+      @sandbox.ref MCIO_#{@session_id}
+      MCIO_#{@session_id}.client @socket
+      MCIO_#{@session_id}.peers @@peers
+      MCIO_#{@session_id}.session_id @session_id
     }
+
+    puts "Completed referencing the MCIO"
 
   end
 
@@ -258,7 +284,7 @@ class SimulationClient
   # available while inside the Matrix
   def build_player_io_object character_proxy
     Kernel::eval( %{
-      class IO#{@name}#{@io_id}
+      class PIO_#{@name}_#{@io_id}
         @@socket = nil
         @@character_proxy = nil
 
@@ -328,13 +354,13 @@ class SimulationClient
     raise if !character_proxy
 
     eval %{
-      @sandbox.ref IO#{@name}#{@io_id}
-      IO#{@name}#{@io_id}.socket = @socket
-      IO#{@name}#{@io_id}.character_proxy = character_proxy
+      @sandbox.ref PIO_#{@name}_#{@io_id}
+      PIO_#{@name}_#{@io_id}.socket = @socket
+      PIO_#{@name}_#{@io_id}.character_proxy = character_proxy
     }
-    @socket.puts "Creating object IO#{@name}#{@io_id} for IO. i.e. IO#{@name}#{@io_id}.puts 'hello world'"
+    @socket.puts "Creating object PIO_#{@name}_#{@io_id} for IO. i.e. PIO_#{@name}_#{@io_id}.puts 'hello world'"
 
-    character_proxy.io_object_name = "IO#{@name}#{@io_id}"
+    character_proxy.io_object_name = "PIO_#{@name}_#{@io_id}"
 
 
     #Create LEGO class which will allow Builders, that players create, to interface to the World Database safely
@@ -454,5 +480,18 @@ class SimulationClient
     @character_proxy.drop name
   end
 
+  # Called by the Agent IRB
+  def punch name
+    # Agents are maxed at 25 points of damage, per punch
+    @character_proxy.agent_punch(name, 25)
+  end
+
+  # Called by the Agent IRB
+  def teleport room_uniqueid
+    #Teleport was handled by NPCManager, therefore the Agent just announces its arrival
+    @character_proxy.announce_arrival
+  end
+
 end
+
 

@@ -11,28 +11,55 @@ class SystemHub
     @mutex = Mutex.new
   end
 
+  # Reset the warnings
+  def clear_warning
+    @mutex.lock
+    @warning = ""
+    @simulation_client = ""
+    @eval_result = ""
+    @mutex.unlock
+  end
+
   # Warning messages are sent by the System, to the Agents when an anomaly is detected.
   # Agents may also send warnings to each other
-  def warning message
+  def warning(message, simulation_client, eval_result = "")
     @mutex.lock
     @warning = message
+    @simulation_client = simulation_client
+    @eval_result = eval_result
     @mutex.unlock
   end
 
   # Information messages are sent by the System to the Agents to inform them of System status
   # Agents may also send warnings to each other
-  def information message
+  def information(message, simulation_client, eval_result = "")
     @mutex.lock
     @info = message
+    @simulation_client = simulation_client
+    @eval_result = eval_result
     @mutex.unlock
   end
 
   # Fatalpriority messages are sent by the System to the Agents to inform them of a Fatal event
   # Agents may also send warnings to each other
-  def fatalpriority message
+  def fatalpriority(message)
     @mutex.lock
     @fatal = message
     @mutex.unlock
+  end
+
+  def simulation_client
+    @mutex.lock
+    copy = @simulation_client.clone
+    @mutex.unlock
+    copy
+  end
+
+  def eval_result
+    @mutex.lock
+    copy = @eval_result.clone
+    @mutex.unlock
+    copy
   end
 
   # Warn status, read by the Agents
@@ -60,3 +87,4 @@ class SystemHub
   end
 
 end
+

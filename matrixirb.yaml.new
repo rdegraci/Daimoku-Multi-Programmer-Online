@@ -1,0 +1,37 @@
+
+filtersecurity: |
+        begin	
+        # No direct access to tables or special objects
+        line.gsub!(/Simcharacter/,'')
+        line.gsub!(/Simdoor/,'')
+        line.gsub!(/Simdown/,'')
+        line.gsub!(/Simeast/,'')
+        line.gsub!(/Simkey/,'')
+        line.gsub!(/Simmap/,'')
+        line.gsub!(/Simnorth/,'')
+        line.gsub!(/Simperson/,'')
+        line.gsub!(/Simplace/,'')
+        line.gsub!(/Simplayer/,'')
+        line.gsub!(/Simsouth/,'')
+        line.gsub!(/Simthing/,'')
+        line.gsub!(/Simup/,'')
+        line.gsub!(/Simwest/,'')
+        line.gsub!(/TheSource/,'')
+        line.gsub!(/TheSystem/,'')
+        line.gsub!(/TheMatrix/,'')
+        line.gsub!(/People/,'')
+        line.gsub!(/Characters/,'')
+        line.gsub!(/Things/,'')
+        line.gsub!(/Places/,'')
+        line.gsub!(/\.all_symbols/,'.class')
+        line.gsub!(/ *= *nil/,'.class')
+        line.gsub!(/\.constants/,'.class')
+        line.gsub!(/local_variables/,'.class')
+        end
+	
+
+inspectorsecurity: |
+  	case
+	when false == true
+	  puts 'additional security'
+        end

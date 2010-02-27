@@ -11,6 +11,8 @@ require 'npcirb.rb'
 require 'support.rb'
 require 'database.rb'
 require 'simulationclient.rb'
+require 'npcserver.rb'
+require 'systemhub.rb'
 
 # A socket server that accepts socket connections and assigns them to a SimulationClient on a
 # per Thread basis. Uses a simple timer system to kill any SimulationClient that may be taking
@@ -19,6 +21,8 @@ class SimulationServer < Sandbox::IRBServer
 
   @@simulation_clients = {}
   @@session_ids = {}
+
+  CONFIG = YAML.load_file '/usr/local/daimoku-server/npc.yaml'
 
   # Initialize the Simulation, especially the Sandbox and the supporting
   # classes that make up the Daimoku system.
@@ -43,20 +47,41 @@ class SimulationServer < Sandbox::IRBServer
     puts "Referencing The Source."
     @sandbox.ref TheSource
 
-    puts "Starting People."
-    @people = People.new @sandbox
-    @people.start_ticking
-
-    puts "Processing characters."
-    @characters = Characters.new @sandbox
-    @characters.start_ticking
-
-    puts "Starting Thing Mover."
-    @things = Things.new @sandbox
-    @things.start_ticking
-
     puts "Initialize The Matrix."
     @matrix = TheMatrix.new
+
+    puts "Instantiating Notification Hub"
+    @notification_hub = SystemHubLoader.new
+    puts "Done."
+    sleep 1
+
+    puts "Instantiating TheReaper"
+    @reaper = TheReaper.new(@sandbox, SimulationClient::peer_connections)
+    @reaper.start_ticking
+    puts "Done."
+    sleep 1
+
+    puts "Instantiating NPC Manager"
+    @npcmanager = NPCManager.new("#{SimulationServer::CONFIG['sim']['server']}", "#{SimulationServer::CONFIG['sim']['port']}".to_i, @sandbox).run
+    puts "Done."
+    sleep 1
+
+    puts "Starting People."
+    @people = People.new(@sandbox, SimulationClient::peer_connections)
+    #    @people.start_ticking
+    sleep 1
+
+    puts "Processing characters."
+    @characters = Characters.new(@sandbox, SimulationClient::peer_connections)
+    @characters.start_ticking
+    sleep 1
+
+    puts "Starting Things."
+    @things = Things.new(@sandbox, SimulationClient::peer_connections)
+    #   @things.start_ticking
+    sleep 1
+
+    puts "\n Simulation Ready!."
   end
 
   # Processes each socket connection. Normal clients are assigned the SimulationIRB.
@@ -137,7 +162,7 @@ class SimulationServer < Sandbox::IRBServer
   # Runs the thing.  It returns the thread used so you can "join" it.  You can also
   # access the HttpServer::acceptor attribute to get the thread later.
   def run
-    sleep 5
+
     BasicSocket.do_not_reverse_lookup=true
     @sandbox.eval "Simplayer.reset_online_status"
 
@@ -178,4 +203,5 @@ class SimulationServer < Sandbox::IRBServer
   end
 
 end
+
 

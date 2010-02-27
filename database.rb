@@ -1,3 +1,8 @@
+#
+# Automated tasks to maintain the Simulation Database
+#
+#
+
 require 'rubygems'
 require 'active_record'
 require 'active_support'
@@ -25,16 +30,20 @@ module AutomationProcessor
   yaml = YAML.load_file '/usr/local/daimoku-server/database.yaml'
   @@connection = ActiveRecord::Base.establish_connection(yaml)
 
-  # Initialize with the Simulation
-  def initialize box
+  # Initialize with the Simulation and PeerConnections
+  # To read the state of the Simulation and disconnect Players
+  # and reload the view of the Players (DejaVu) by inserting
+  # a 'look' command in the Players connection stream
+  #
+  def initialize(box, peerconnections)
     @box = box
+    @peerconnections = peerconnections
   end
 
   # Start the script processing
-  # TODO: Thread this
   def start_ticking
-    Thread.abort_on_exception = false
     @mover = Thread.new { tick }
+    @mover.abort_on_exception = true
   end
 
 end
@@ -46,17 +55,9 @@ class People
 
   # Loop every 10 minutes
   def tick
-    sleep 10
     while true
       puts "Processing People"
-      people = Simperson.find(:all, :select => 'simpeople.script')
-      people.each do |aperson|
-        begin
-          @box.eval(aperson.script) if aperson.script
-        rescue Sandbox::Exception, Sandbox::TimeoutError => e
-          puts  e, "\n"
-        end
-      end
+      @box.eval("Simperson.process_people")
       sleep 600
     end
   end
@@ -68,27 +69,20 @@ end
 class Characters
   include AutomationProcessor
 
-  # Loop every 10 minutes
+  # Loop every 25 seconds
   def tick
-    sleep 10
     while true
+      sleep 25
       puts "Processing Characters"
-      chars = Simcharacter.find(:all, :conditions => ['hitpoints < ?', 100])
-      chars.each do |cc|
-        begin
-          health = cc.hitpoints
-          health = health + 5
-          health = 100 if health > 100
-          cc.health = health
-          cc.save!
-        rescue
-          puts "Error trying to process Characters"
-        end
+      sessionids = @box.eval("Simcharacter.process_characters(0, 100)")
+      sessionids.each do |ss|
+        sid = ss[0]
+        health = ss[1]
+        maxhealth = ss[2]
+        @peerconnections.system_say(sid, "You feel better. [ +1/second  #{health}:#{maxhealth} ]")
       end
-      sleep 10
     end
   end
-
 end
 
 # Process Place scripts. Places are rooms. A room can be scripted.
@@ -97,14 +91,18 @@ class Places
 
   # Loop every 10 minutes
   def tick
-    sleep 10
     while true
       puts "Processing Places"
-      places = Simplace.find(:all, :select => 'simpeople.script')
+      @box.eval("Simplace.process_places")
+      #      places = Simplace.find(:all, :select => 'simpeople.script')
+      #      begin
+      #          @box.eval(thing.script) if thing.script
+      #        rescue Sandbox::Exception, Sandbox::TimeoutError => e
+      #            puts  e, "\n"
+      #        end
       sleep 600
     end
   end
-
 end
 
 
@@ -115,10 +113,12 @@ class Things
 
   # Loop every 10 minutes
   def tick
-    sleep 10
+    sleep 20
     while true
       print "."
-      things = Simthing.find(:all)
+      things = @box.eval %{
+        Simthing.find(:all)
+      }
       things.each do |thing|
         begin
           @box.eval(thing.script) if thing.script
@@ -133,12 +133,43 @@ class Things
 end
 
 
+# Deletes the Simplayer if the Simcharacter hp goes to zero
+#
+class TheReaper
 
+  include AutomationProcessor
 
+  # Loop every 10
+  def tick
+    sleep 30
+    puts "Starting to process the dead."
+    while true
+      sleep 10
+      puts "Trying to find the dead."
 
+      sessions = @box.eval %{
+        Simcharacter.reap_dead_player_sessionids
+      }
+      p sessions
+      sessions.each do |ss|
+        puts "Disconnecting Player session #{ss}"
+        @peerconnections.disconnect ss
+      end
 
+      @box.eval %{
+        sess = Simcharacter.reap_dead_player_sessionids
+        sess.each do |ss|
+          s = Simplayer.find_by_sessionid(ss)
+          next if !s
 
-
-
-
-
+          Simperson.delete(s.simcharacters.first.simperson)
+          Simcharacter.delete(s.simcharacters.first)
+          s.reaped = true
+          s.save!
+          Simplayer.delete(s)
+          s=nil
+        end
+      }
+    end
+  end
+end

@@ -1,9 +1,15 @@
 
 #/usr/local/lib/ruby/site_ruby/1.8/sandbox/irb.rb
 require 'sandbox/irb'
+require 'drb'
+require 'npcserver'
 
 # The command parser for the Player, based upon IRB.
 class SimulationIRB < Sandbox::IRB
+
+  include AgentNotification
+
+  CONFIG = YAML.load_file('/usr/local/daimoku-server/matrixirb.yaml')
 
   # The SimulationClient is necessary because the
   # SimulationIRB also functions as a quick and dirty MUD
@@ -16,6 +22,10 @@ class SimulationIRB < Sandbox::IRB
   # Starts accepting IO from the socket
   def start(io)
     raise if !@simulation_client  #must set simulation client
+
+    # Connecting to the Notification Hub
+    connect_to_hub
+
     scanner = RubyLex.new
     scanner.exception_on_syntax_error = false
 
@@ -33,17 +43,23 @@ class SimulationIRB < Sandbox::IRB
       @p = prompt(f, ltype, indent, line_no)
     end
 
-    # Clean up some of the Input, before parsing
-    scanner.set_input(io) do
-      signal_status(:IN_INPUT) do
-        io.print @p
-        result = io.gets if io.closed? == false && io
-        if result
-          result.gsub(/[\x00-\x09\x0B\x0C\x0E-\x1F\x80-\xFF]/,'')
-        else
-          ""
+    begin
+      # Clean up some of the Input, before parsing
+      scanner.set_input(io) do
+        signal_status(:IN_INPUT) do
+          io.print @p if io.closed? == false && io
+          result = io.gets if io.closed? == false && io
+          if result
+            result.gsub(/[\x00-\x09\x0B\x0C\x0E-\x1F\x80-\xFF]/,'')
+          else
+            # io is closed , return!
+            return
+          end
         end
       end
+    rescue
+      puts "SimulationIRB:socket forced closed"
+      return
     end
 
     scanner.each_top_level_statement do |line, line_no|
@@ -56,35 +72,14 @@ class SimulationIRB < Sandbox::IRB
         return if line == "quit"
         return if line == 'q'
 
-        # No direct access to tables or special objects
-        line.gsub!(/Simcharacter/,'')
-        line.gsub!(/Simdoor/,'')
-        line.gsub!(/Simdown/,'')
-        line.gsub!(/Simeast/,'')
-        line.gsub!(/Simkey/,'')
-        line.gsub!(/Simmap/,'')
-        line.gsub!(/Simnorth/,'')
-        line.gsub!(/Simperson/,'')
-        line.gsub!(/Simplace/,'')
-        line.gsub!(/Simplayer/,'')
-        line.gsub!(/Simsouth/,'')
-        line.gsub!(/Simthing/,'')
-        line.gsub!(/Simup/,'')
-        line.gsub!(/Simwest/,'')
-        line.gsub!(/TheSource/,'')
-        line.gsub!(/TheSystem/,'')
-        line.gsub!(/TheMatrix/,'')
-        line.gsub!(/People/,'')
-        line.gsub!(/Characters/,'')
-        line.gsub!(/Things/,'')
-
-        # Keeps the Player from looking at the symbol table
-        # and also from setting critical class constants to nil
-
-        line.gsub!(/\.all_symbols/,'.class')     #no symbol table
-        line.gsub!(/ *= *nil/,'.class') #no force nil
-        line.gsub!(/\.constants/,'.class') #no constants
-        line.gsub!(/local_variables/,'class') #no local variables
+        binding
+        begin
+          Kernel::eval( %{
+            #{CONFIG['filtersecurity']}
+          }, binding)
+        rescue
+          puts "Error in Filter Security"
+        end
 
         # If the line results in an error, perhaps the line is a command
         # therefore we handle the possible command in the rescue section.
@@ -93,6 +88,18 @@ class SimulationIRB < Sandbox::IRB
           @simulation_client.say_code "#{line}\n"
           io.puts @prompt[:return] % [val.inspect]
           @simulation_client.say_code("=> #{val.inspect}\n")
+
+
+          binding
+          begin
+            Kernel::eval( %{
+              #{CONFIG['inspectorsecurity']}
+            }, binding)
+          rescue
+            puts "Error in Inspector Security"
+          end
+
+
         rescue Sandbox::Exception, Sandbox::TimeoutError => e
 
           # Possible MUD command
@@ -146,5 +153,6 @@ class SimulationIRB < Sandbox::IRB
     end
   end
 end
+
 
 

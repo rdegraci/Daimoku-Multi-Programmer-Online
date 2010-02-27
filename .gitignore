@@ -4,5 +4,6 @@ database.yaml
 drb.yaml
 npc.yaml
 server.yaml
+matrixirb.yaml
 server.rb.pid
 
