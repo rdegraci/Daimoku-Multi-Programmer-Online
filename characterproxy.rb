@@ -312,9 +312,21 @@ class CharacterProxy
     }
     emote_room "#{@name} drops the #{item}." if dropped == true
   end
-
-  # Drop an items into the current room
+  
+  # Examine an item, either in the Players inventory or in the room
   # Send the message to each Player's socket
+  def examine item
+    raise if !@characterio
+    exam = @sandbox.eval %{
+      name = '#{@name}'
+      item_name = '#{item}'
+      #{@matrix_character} = Simcharacter.find(:first, :conditions => ['name = ?', name], :include => [{:simperson => :simthings}])
+      #{@matrix_character}.examine(item_name, #{@characterio})
+    }
+    emote_room "#{@name} examines the #{item}."  if exam == true
+  end
+
+  # Display Inventory
   def inventory
     raise if !@characterio
     @sandbox.eval %{
@@ -322,6 +334,20 @@ class CharacterProxy
       #{@matrix_character} = Simcharacter.find(:first, :conditions => ['name = ?', name], :include => [{:simperson => :simthings}])
       #{@matrix_character}.inventory(name, #{@characterio})
     }
+  end
+
+  # Display Inventory
+  def try(verb, text)
+    raise if !@characterio
+    tried = @sandbox.eval %{
+      name = '#{@name}'
+      verb_name = '#{verb}'
+      text_line = '#{text}'
+      #{@matrix_character} = Simcharacter.find(:first, :conditions => ['name = ?', name], :include => [{:simperson => :simthings}])
+      #{@matrix_character}.try(verb_name, text_line, name, #{@characterio})
+    }
+    emote_room "#{@name} #{verb}s the #{text}."  if tried == true
+    tried
   end
 
 

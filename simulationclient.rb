@@ -474,6 +474,11 @@ class SimulationClient
   def take name
     @character_proxy.take name
   end
+  
+  # Called by the SimulationIRB, for eating an object
+  def examine name
+    @character_proxy.examine name
+  end
 
   # Called by the SimulationIRB, for dropping an object
   def drop name
@@ -490,6 +495,11 @@ class SimulationClient
   def teleport room_uniqueid
     #Teleport was handled by NPCManager, therefore the Agent just announces its arrival
     @character_proxy.announce_arrival
+  end
+  
+  # Try to trampoline to items within the room
+  def try(verb, text)
+    @character_proxy.try(verb, text)
   end
 
 end

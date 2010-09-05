@@ -17,6 +17,12 @@ require '/usr/local/daimoku-rails/app/models/simup.rb'
 require '/usr/local/daimoku-rails/app/models/simdown.rb'
 require '/usr/local/daimoku-rails/app/models/simmap.rb'
 require '/usr/local/daimoku-rails/app/models/simplayer.rb'
+
+require '/usr/local/daimoku-rails/app/models/sim_module.rb'
+require '/usr/local/daimoku-rails/app/models/sim_klass.rb'
+require '/usr/local/daimoku-rails/app/models/sim_variable.rb'
+require '/usr/local/daimoku-rails/app/models/sim_script.rb'
+
 require 'matrix-extensions.rb'
 require 'builders.rb'
 
@@ -107,6 +113,21 @@ class TheMatrix
 
     @@matrix.import SocketServerHandler
     @@matrix.import SocketClientHandler
+    
+    @@matrix.import Edible
+    
+    @@matrix.ref SimModule
+    SimModule.sandbox = @@matrix
+    
+    @@matrix.ref SimKlass
+    SimKlass.sandbox = @@matrix    
+    
+    @@matrix.ref SimVariable
+    SimVariable.sandbox = @@matrix
+    
+    @@matrix.ref SimScript
+    SimScript.sandbox = @@matrix
+    SimScript.load_script 'startup' #build the in-world modules, classes, variables
 
   end
 
@@ -120,9 +141,8 @@ end
 #
 # This class is referenced within the Simulation, so it is instantiable within the Simulation.
 #
-#  thesource = TheSource.new     # instantiate within the Simulation
-#  thesource.evaluate "class Apple; end"  # creates the Apple class, outside the Simulation, from the inside!
-#  thesource.evaluate "apple = Apple.new" # instantiates the Apple class, outside the Simulation, from the inside!
+#  TheSource.evaluate "class Apple; end"  # creates the Apple class, outside the Simulation, from the inside!
+#  TheSource.evaluate "apple = Apple.new" # instantiates the Apple class, outside the Simulation, from the inside!
 #
 class TheSource
 
@@ -135,17 +155,36 @@ class TheSource
     puts "Detected TheSource being instantiated."
   end
 
-  # Make available the Simulation
-  def self.magicbox
-    @@sandbox
-  end
-
   # *WARNING*
   # Changes the source code of the Simulation Server from _inside_ the Simulation
   #
   # Evaluate the source change into the TOP LEVEL BINDING of the Simulation Server
   def self.evaluate change
-    Kernel::eval('#{change}', TOPLEVEL_BINDING)
+    change.gsub!(/`/,";")
+    change.gsub!(/ +Kernel/,";") 
+    change.gsub!(/ +Class/,";") 
+    change.gsub!(/ +Object/,";")
+    change.gsub!(/ +Module/,";")
+    change.gsub!(/ +File/,";")
+    change.gsub!(/ +IO/,";")
+    change.gsub!(/ +Thread/,";")
+      
+    code = %{
+      #{change}
+    }
+    puts "TheSource.evaluate #{code}"
+    Kernel::eval(code, TOPLEVEL_BINDING)
+  end
+  
+  # *WARNING*
+  # Adds or changes the Simulation from _inside_ the Simulation
+  #
+  def self.dejavu change
+    code = %{
+      #{change}
+    }
+    puts "TheSource.dejavu #{code}"
+    Kernel::eval("@@sandbox.eval(#{code})")
   end
 
   # *WARNING*
@@ -155,7 +194,7 @@ class TheSource
     puts filename
     p filename
     Kernel::eval("load #{filename}", TOPLEVEL_BINDING)
-    Kernel::eval("TheSource.magicbox.ref #{klassname}", TOPLEVEL_BINDING)
+    Kernel::eval("@@sandbox.ref(#{klassname})")
   end
 
 end
@@ -174,28 +213,61 @@ class TheSystem
   def initialize
   end
 
-  def self.magicbox
-    @@sandbox
-  end
 
   # Create a proxy for an external class. The proxy marshals parameters and also marshals the return value.
   # This allows an Agent to request an action that takes place outside the Simulation, from the inside.
   #
+  # The class must already exist outside the Simulation:
+  #
+  #
+  # 
   def self.agent_request klassname
-    #Kernel::eval("class #{klassname} ; end ", TOPLEVEL_BINDING)
     begin
-      Kernel::eval("TheSystem.magicbox.ref #{klassname}", TOPLEVEL_BINDING)
+      Kernel::eval("@@sandbox.ref(#{klassname})")
     rescue
       puts "Agent requesting a klass that does not exist."
     end
   end
 
   # Copy class into the Simulation, with its own definition
+  # The class must first exist in the Simulation:
+  #
+  #   class Apple
+  #   def eat
+  #    "yum"
+  #   end
+  #   end
+  #   TheSystem.request 'Apple'
+  #   apple = Apple.new
+  #   apple.eat
+  #
   def self.neo_request klassname
     begin
-      Kernel::eval("TheSystem.magicbox.import #{klassname}", TOPLEVEL_BINDING)
+      #Kernel::eval("TheSystem.magicbox.import #{klassname}", TOPLEVEL_BINDING)
+      Kernel::eval("@@sandbox.import(#{klassname})")
     rescue
       puts "Neo requesting a klass that does not exist."
+    end
+  end
+  
+  # Copy class into the Simulation, with its own definition
+  # The class must first exist in the Simulation:
+  #
+  #   class Apple
+  #   def eat
+  #     "yum"
+  #   end
+  #   end
+  #   TheSystem.request 'Apple'
+  #   apple = Apple.new
+  #   apple.eat
+  #
+  def self.request klassname
+    begin
+      #Kernel::eval("TheSystem.magicbox.import #{klassname}", TOPLEVEL_BINDING)
+      Kernel::eval("@@sandbox.import(#{klassname})")
+    rescue
+      puts "System requesting a klass that does not exist."
     end
   end
 

@@ -51,6 +51,7 @@ class ArchitectIRB < Sandbox::IRB
           io.puts @prompt[:return] % [val.inspect]
         rescue Sandbox::Exception, Sandbox::TimeoutError => e
           # Possible MUD command
+          line.gsub!(/the/,'')
           case
           when line =~ /^take /
             cooked = line.gsub(/^take /,'')
@@ -91,8 +92,25 @@ class ArchitectIRB < Sandbox::IRB
             io.puts "Your LEGO object is #{@simulation_client.player_lego_io }. i.e. h = HardLine.new(#{@simulation_client.player_lego_io})"
             io.puts
           else
-            # Not a MUD command, therefore handle the error output normally
-            io.print e, "\n"
+            begin
+              words = line.split(' ')
+              verb = words.first
+              eval %{  
+                cooked = line.gsub(/^#{verb}/,'')
+                @simulation_client.#{verb} cooked
+              }
+            rescue
+              begin
+                words = line.split(' ')
+                verb = words.first
+                eval %{  
+                  cooked = line.gsub(/^#{verb}/,'')
+                  @simulation_client.try(#{verb}, cooked)
+                }
+              rescue
+                io.print e, "\n"
+              end
+            end
           end
         end
       end

@@ -26,7 +26,7 @@ class Thinger < GameObjectManager
     super(io)
   end
 
-  attr_writer :name, :description, :script, :strength, :weight, :portable, :visible, :container, :platform, :clothing
+  attr_accessor :name, :description, :script, :strength, :weight, :portable, :visible, :container, :platform, :clothing
 
   # Creates a Thing and drops it inside the current room
   def make(name, description, script = "")
@@ -42,6 +42,12 @@ class Thinger < GameObjectManager
     character.simperson.simplace.save!
 
     @interface.puts "#{@thing.name} appears on the floor."
+    
+    klass = "\"class #{@thing.name.capitalize} ; end\""
+    puts klass
+    TheSource.dejavu(klass)
+    TheSystem.request(@thing.name.capitalize)
+    @interface.puts "Created class #{@thing.name.capitalize}. To use:  klass = #{@thing.name.capitalize}.new "
     sync
   end
 

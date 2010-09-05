@@ -313,3 +313,46 @@ class SocketServer
 end
 
 
+class Platform
+end
+
+module Examinable
+  def examine
+  end
+end
+
+
+module Portable
+  def take
+  end
+end
+
+module Wearable
+  def wear
+  end
+end
+
+module Container
+  def insert object
+  end
+end
+
+module Edible
+  def eat
+  end
+end
+
+module Drinkable
+  def drink
+  end
+end
+
+class Mobile
+end
+
+module Activatable
+  def activate
+  end
+  def deactivate
+  end
+end
