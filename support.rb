@@ -23,8 +23,8 @@ require '/usr/local/daimoku-rails/app/models/sim_klass.rb'
 require '/usr/local/daimoku-rails/app/models/sim_variable.rb'
 require '/usr/local/daimoku-rails/app/models/sim_script.rb'
 
-require 'matrix-extensions.rb'
-require 'builders.rb'
+require '/usr/local/daimoku-server/matrix-extensions.rb'
+require '/usr/local/daimoku-server/builders.rb'
 
 #
 # Initialized the Simulation with objects that the human can manipulate.
