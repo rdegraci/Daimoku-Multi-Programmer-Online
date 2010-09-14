@@ -19,6 +19,15 @@ class SystemHub
     @eval_result = ""
     @mutex.unlock
   end
+  
+  # Change the Matrix, callable by outside scripts
+  # or the Rails Application
+  def dejavu code
+    script = %{
+      #{code}
+    }
+    @matrix.eval script
+  end
 
   # Warning messages are sent by the System, to the Agents when an anomaly is detected.
   # Agents may also send warnings to each other
@@ -48,6 +57,12 @@ class SystemHub
     @mutex.unlock
   end
 
+  def simulation= sandbox
+    @mutex.lock
+    @matrix = sandbox
+    @mutex.unlock
+  end
+  
   def simulation_client
     @mutex.lock
     copy = @simulation_client.clone
