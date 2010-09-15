@@ -95,17 +95,17 @@ module LeadAgent
               @server.puts "say Mr #{target_character.name} we meet again"
               @server.puts "AgentPunch #{target_character.name}"
               @attack_target = target_character.name
-	      sleep 2
+              sleep 2
             end
             if (target_character.simperson.simplace.simpeople.include?(agent_character.simperson) == true) then
               @server.puts "AgentPunch #{target_character.name}"
               @attack_target = target_character.name
-	      sleep 3
+              sleep 3
             end
-	    if (target_character.simperson.simplace.simpeople.include?(agent_character.simperson) ==false) then
-	       @attack_target = ""
-               @hub.clear_warning
-            end 
+            if (target_character.simperson.simplace.simpeople.include?(agent_character.simperson) ==false) then
+              @attack_target = ""
+              @hub.clear_warning
+            end
           end
         end
       end
