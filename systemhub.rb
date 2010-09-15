@@ -10,9 +10,9 @@ class SystemHubLoader
   def initialize matrix
     config = YAML.load_file('/usr/local/daimoku-server/drb.yaml')
 
-    @drb = DRb.start_service("druby://#{config['server']}:#{config['port']}", SystemHub.new)
-    @drb.simulation = matrix
-
+    @systemhub = SystemHub.new
+    @systemhub.simulation = matrix
+    @drb = DRb.start_service("druby://#{config['server']}:#{config['port']}", @systemhub)
   end
 end
 

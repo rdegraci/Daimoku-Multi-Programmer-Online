@@ -22,13 +22,34 @@ class SystemHub
   
   # Change the Matrix, callable by outside scripts
   # or the Rails Application
-  def dejavu code
-    script = %{
-      #{code}
-    }
-    @matrix.eval script
+  def reload(db_klass, name)
+    puts "Reloading klass=#{db_klass}, name=#{name}"
+    
+    case db_klass
+    when "SimKlass"
+      loader = %{
+        #{db_klass}.load_klass('#{name}')
+      }
+    when "SimModule"
+      loader = %{
+        #{db_klass}.load_module('#{name}')
+      }
+      puts "Unable to eval #{loader}" if !eval(loader)
+    when "SimScript"
+      loader = %{
+        #{db_klass}.load_script('#{name}')
+      }
+      puts "Unable to eval #{loader}" if !eval(loader)
+    when "SimVariable"
+      loader = %{
+        #{db_klass}.load_variable('#{name}')
+      }
+      puts "Unable to eval #{loader}" if !eval(loader)
+    else
+      puts "Unable to reload #{db_klass}!"
+    end
   end
-
+  
   # Warning messages are sent by the System, to the Agents when an anomaly is detected.
   # Agents may also send warnings to each other
   def warning(message, simulation_client, eval_result = "")

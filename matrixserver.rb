@@ -51,7 +51,7 @@ class SimulationServer < Sandbox::IRBServer
     @matrix = TheMatrix.new
 
     puts "Instantiating Notification Hub"
-    @notification_hub = SystemHubLoader.new(@matrix)
+    @notification_hub = SystemHubLoader.new(@sandbox)
     puts "Done."
     sleep 1
 
