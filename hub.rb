@@ -30,21 +30,38 @@ class SystemHub
       loader = %{
         #{db_klass}.load_klass('#{name}')
       }
+      begin
+        eval(loader)
+      rescue
+        puts "Unable to evaluate: #{loader}"
+      end
     when "SimModule"
       loader = %{
         #{db_klass}.load_module('#{name}')
       }
-      puts "Unable to eval #{loader}" if !eval(loader)
+      begin
+        eval(loader)
+      rescue
+        puts "Unable to evaluate: #{loader}"
+      end
     when "SimScript"
       loader = %{
         #{db_klass}.load_script('#{name}')
       }
-      puts "Unable to eval #{loader}" if !eval(loader)
+      begin
+        eval(loader)
+      rescue
+        puts "Unable to evaluate: #{loader}"
+      end
     when "SimVariable"
       loader = %{
         #{db_klass}.load_variable('#{name}')
       }
-      puts "Unable to eval #{loader}" if !eval(loader)
+      begin
+        eval(loader)
+      rescue
+        puts "Unable to evaluate: #{loader}"
+      end
     else
       puts "Unable to reload #{db_klass}!"
     end

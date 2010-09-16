@@ -172,8 +172,12 @@ class TheSource
     code = %{
       #{change}
     }
-    puts "TheSource.evaluate #{code}"
-    Kernel::eval(code, TOPLEVEL_BINDING)
+    puts "TheSource is evaluating:#{code}"
+    begin
+      Kernel::eval(code, TOPLEVEL_BINDING)
+    rescue
+      puts "Unable to evaluate: #{code}"
+    end
   end
   
   # *WARNING*
@@ -184,17 +188,23 @@ class TheSource
       #{change}
     }
     puts "TheSource.dejavu #{code}"
-    Kernel::eval("@@sandbox.eval(#{code})")
+    begin
+      Kernel::eval("@@sandbox.eval(#{code})")
+    rescue
+      puts "Unable to evaluate: #{code}"
+    end
   end
 
   # *WARNING*
   # Loads a file (usually containing a class definition) and creates a reference to the klass
   # Once the reference is made, that klass becomes instantiable within the Simulation
   def self.load(filename, klassname)
-    puts filename
-    p filename
-    Kernel::eval("load #{filename}", TOPLEVEL_BINDING)
-    Kernel::eval("@@sandbox.ref(#{klassname})")
+    begin
+      Kernel::eval("load #{filename}", TOPLEVEL_BINDING)
+      Kernel::eval("@@sandbox.ref(#{klassname})")
+    rescue
+      puts "Unable to load #{filename} and reference #{klassname}"
+    end
   end
 
 end
