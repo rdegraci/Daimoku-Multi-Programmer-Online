@@ -53,6 +53,9 @@ class ArchitectIRB < Sandbox::IRB
           # Possible MUD command
           line.gsub!(/the/,'')
           case
+          when line =~ /^system /
+            cooked = line.gsub(/^system /,'')
+            @simulation_client.system cooked
           when line =~ /^take /
             cooked = line.gsub(/^take /,'')
             @simulation_client.take cooked

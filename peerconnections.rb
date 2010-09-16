@@ -14,8 +14,7 @@ class PeerConnections
   def self.system_emote (text)
     puts "sytem_emote #{text}"
     @@proxies.each_pair do |k,v|
-      raise if v.socket.closed? == true
-      v.socket.puts "\n#The System: #{text}" if (CharacterProxy::is_hack_mode(k) == true)
+      v.socket.puts "\n#The System: #{text}" if v.socket.closed? == false
     end
   end
 

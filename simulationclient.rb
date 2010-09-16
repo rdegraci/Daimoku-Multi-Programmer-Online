@@ -14,7 +14,7 @@ class SimulationClient
   database_config = YAML.load_file '/usr/local/daimoku-server/database.yaml'
   @@connection = ActiveRecord::Base.establish_connection(database_config)
   
-  config = YAML.load_file '/usr/local/daimoku-server/database.yaml'
+  config = YAML.load_file '/usr/local/daimoku-server/config.yaml'
   @@version = config['version']
   
   @@peers = PeerConnections.new
@@ -494,6 +494,10 @@ class SimulationClient
     @character_proxy.agent_punch(name, 25)
   end
 
+  def system message
+    PeerConnections.system_emote message
+  end
+  
   # Called by the Agent IRB
   def teleport room_uniqueid
     #Teleport was handled by NPCManager, therefore the Agent just announces its arrival
