@@ -4,7 +4,7 @@ host: localhost
 database: Daimoku-Rails_development
 username: username
 password: password
-pool: 20
+pool: 40
 wait_timeout: 10
 
 

@@ -11,9 +11,12 @@ class SimulationClient
 
   attr_reader :name, :password, :socket, :session_id, :character_proxy, :player_io, :player_lego_io
 
+  database_config = YAML.load_file '/usr/local/daimoku-server/database.yaml'
+  @@connection = ActiveRecord::Base.establish_connection(database_config)
+  
   config = YAML.load_file '/usr/local/daimoku-server/database.yaml'
-  @@connection = ActiveRecord::Base.establish_connection(config)
-
+  @@version = config['version']
+  
   @@peers = PeerConnections.new
 
   # Other parts of the system will need access to the peer simulation clients
@@ -108,7 +111,7 @@ class SimulationClient
 
   # The login process. Returns nil if the login fails.
   def query client
-    client.puts "Daimoku: Multi-Programmer Online v0.3"
+    client.puts "Daimoku: Multi-Programmer Online v#{@@version}"
     client.puts
     client.print "Type your name [alpha numeric only] :"
 
