@@ -1,7 +1,26 @@
 # Support classes are used by the SimulationServer to create the overall System. These classes may be available to Agents or Neo
 require 'rubygems'
 require 'active_record'
+
+# When using ActiveRecord::Associations outside of Rails, a NameError is thrown
+# irb(main):002:0> require 'rubygems' => true 
+# irb(main):003:0> require 'active_record' => true 
+# irb(main):004:0> ActiveRecord => ActiveRecord 
+# irb(main):005:0> ActiveRecord::Associations NameError: uninitialized constant ActiveRecord::Associations
+# Rhett Sutphin
+# April 3rd, 2010 @ 02:28 AM
+# Seems to me that the lowest-impact fix would be to move ActiveRecordError out of base.rb and into its own file. 
+# That would break the autoload cycle (ActiveRecordError loads from base.rb, base.rb loads Associations, Associations loads ActiveRecordError).
+# In any case, another workaround is to explicitly require 'active_record/base' after requiring 'active_record'.
+require 'active_record/base'
+
 require 'active_support'
+require 'active_resource'
+
+
+# Necessary to require mysql_api here, to prevent
+# undefined method `require' for main:Object error
+require 'mysql_api'
 
 require '/usr/local/daimoku-rails/app/models/simcharacter.rb'
 require '/usr/local/daimoku-rails/app/models/simperson.rb'
